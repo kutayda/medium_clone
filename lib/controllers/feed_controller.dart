@@ -1,5 +1,6 @@
+// ignore_for_file: avoid_print
+
 import 'package:get/get.dart';
-import 'package:flutter/material.dart'; // Renkler için gerekli
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';

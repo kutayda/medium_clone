@@ -1,12 +1,9 @@
 // ignore_for_file: avoid_print
 
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:io';
-import 'package:get/get.dart';
-
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:8000';
   final FlutterSecureStorage storage = const FlutterSecureStorage();
