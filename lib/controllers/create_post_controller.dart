@@ -3,95 +3,101 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'feed_controller.dart';
 
-class CreatePostController extends GetxController{
+class CreatePostController extends GetxController {
   final ApiService _apiService = ApiService();
 
   final titleController = TextEditingController();
   final contentController = TextEditingController();
-  final imageUrlController = TextEditingController(); 
+  final imageUrlController = TextEditingController();
 
   var isLoading = false.obs;
   var categories = [].obs;
   var selectedCategory = RxnString();
 
   var isEditMode = false.obs;
-  var editPostId = ''.obs; 
+  var editPostId = ''.obs;
 
-@override
+  @override
   void onInit() {
     super.onInit();
-    
-    // 1. ÖNCE DÜZENLEME MODUNDA MIYIZ ONA BAKALIM
+    _loadCategories();
+
+    // Eğer sayfaya bir argüman (post verisi) geldiyse düzenleme moduna geç
     if (Get.arguments != null) {
       isEditMode.value = true;
       final post = Get.arguments;
+      editPostId.value = post['id'];
       
-      // ZIRHLI ATAMALAR: Eğer veritabanından 'null' gelirse, çökme, yerine '' (boş metin) koy! (Sihirli işaret: ?? '')
-      editPostId.value = post['id'] ?? '';
+      // Mevcut verileri kutucuklara doldur
       titleController.text = post['title'] ?? '';
       contentController.text = post['content'] ?? '';
       imageUrlController.text = post['image_url'] ?? '';
-
-      // ESKİ KATEGORİYİ SEÇİLİ HALE GETİR
+      
+      // Eğer postun zaten bir kategorisi varsa onu seçili yap
       if (post['categories'] != null && post['categories'].isNotEmpty) {
         selectedCategory.value = post['categories'][0]['name'];
       }
     }
-
-    // 2. SONRA KATEGORİLERİ SUNUCUDAN ÇEK
-    _loadCategories(); 
   }
 
-  // Kategorileri Getir
+  // Kategorileri Sunucudan Getir
   Future<void> _loadCategories() async {
-    categories.value = await _apiService.getCategories();
+    final fetched = await _apiService.getCategories();
+    categories.value = fetched;
     
-    // DİKKAT: Eğer düzenleme modundaysak eski kategori zaten seçilmiştir, onu bozma!
-    // Sadece eğer kategori boşsa (yeni post açılıyorsa) ilk kategoriyi varsayılan yap.
+    // Eğer yeni post açılıyorsa ve kategori seçilmemişse ilkini varsayılan yap
     if (categories.isNotEmpty && selectedCategory.value == null) {
-      selectedCategory.value = categories[0]['name']; 
+      selectedCategory.value = categories[0]['name'];
     }
   }
 
-  // Gönderi Paylaş
-Future<void> submitPost() async {
-    if (titleController.text.trim().isEmpty || contentController.text.trim().isEmpty) {
-      Get.snackbar('Uyarı', 'Lütfen başlık ve içerik alanlarını doldurun.', backgroundColor: Colors.orange, colorText: Colors.white);
+  // Ana İşlem: Paylaş veya Güncelle
+  Future<void> submitPost() async {
+    if (titleController.text.trim().isEmpty || 
+        contentController.text.trim().isEmpty || 
+        selectedCategory.value == null) {
+      Get.snackbar('Uyarı', 'Lütfen başlık, içerik ve kategori alanlarını doldurunuz.', 
+          backgroundColor: Colors.orange, colorText: Colors.white);
       return;
     }
 
     isLoading.value = true;
-    bool success;
+    bool success = false;
 
-    // ŞALTERE GÖRE KARAR VERİYORUZ
+    // Seçilen kategoriyi bir liste olarak hazırlıyoruz
+    List<String> categoryList = [selectedCategory.value!];
+
     if (isEditMode.value) {
-      // GÜNCELLEME İŞLEMİ
+      // 📝 GÜNCELLEME İŞLEMİ
       success = await _apiService.updatePost(
         editPostId.value,
         titleController.text.trim(),
         contentController.text.trim(),
+        categoryList, // Kategorileri de gönderiyoruz!
         imageUrlController.text.trim(),
       );
     } else {
-    // YENİ PAYLAŞMA İŞLEMİ
+      // 🚀 YENİ PAYLAŞMA İŞLEMİ
       success = await _apiService.createPost(
         titleController.text.trim(),
         contentController.text.trim(),
-        [selectedCategory.value ?? 'Genel'], 
-        imageUrlController.text.trim(), 
+        categoryList,
+        imageUrlController.text.trim(),
       );
     }
 
     if (success) {
-      Get.back(); 
-      // Mesajı moda göre değiştir
-      Get.snackbar('Başarılı', isEditMode.value ? 'Yazınız güncellendi!' : 'Yazınız paylaşıldı!', backgroundColor: Colors.green, colorText: Colors.white);
-      
+      // Ana sayfadaki verileri yenile
       if (Get.isRegistered<FeedController>()) {
-        Get.find<FeedController>().loadData();
+        await Get.find<FeedController>().loadData();
       }
+      
+      Get.back(); // Sayfayı kapat
+      Get.snackbar('Başarılı', isEditMode.value ? 'Yazınız güncellendi!' : 'Yazınız paylaşıldı!', 
+          backgroundColor: Colors.green, colorText: Colors.white);
     } else {
-      Get.snackbar('Hata', 'İşlem başarısız oldu.', backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar('Hata', 'İşlem gerçekleştirilirken bir sorun oluştu.', 
+          backgroundColor: Colors.red, colorText: Colors.white);
     }
 
     isLoading.value = false;
@@ -104,5 +110,4 @@ Future<void> submitPost() async {
     imageUrlController.dispose();
     super.onClose();
   }
-
 }

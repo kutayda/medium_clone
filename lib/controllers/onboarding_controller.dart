@@ -14,7 +14,7 @@ class OnboardingController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadCategories(); // Controller hafızaya alındığı an verileri çekmeye başla
+    loadCategories(); 
   }
 
   Future<void> loadCategories() async {
@@ -32,13 +32,15 @@ class OnboardingController extends GetxController {
     }
   }
 
+  // İŞTE SİHİRLİ VE DÜZELTİLMİŞ BÖLÜM BURASI 🪄
   Future<void> finishOnboarding() async {
     if (selectedCategory.value != null) {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('saved_category', selectedCategory.value!);
+      
+      // FeedController bizden liste bekliyor. Biz de seçilen tek kategoriyi köşeli parantez içine alıp Liste olarak kaydediyoruz!
+      await prefs.setStringList('my_categories', [selectedCategory.value!]);
     }
     
-    // offAll, geçmişteki tüm sayfaları silip yeni sayfaya geçer (Geri tuşunu iptal eder).
     Get.offAll(() => const FeedScreen()); 
   }
 }
