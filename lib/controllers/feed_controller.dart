@@ -75,8 +75,6 @@ class FeedController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // ... Silme, Beğeni ve Yorum fonksiyonların harika, onlara dokunmuyorum ...
   
   // 3. Post Sil
   Future<bool> deletePost(String postId) async {
@@ -94,28 +92,35 @@ class FeedController extends GetxController {
     loadData();
   }
 
-  // 5. Beğeni İşlemi
-  Future<bool> toggleLike(String postId) async {
-    bool? isLikedNow = await _apiService.toggleLike(postId);
-    if (isLikedNow != null) {
-      int index = posts.indexWhere((p) => p['id'] == postId);
-      if (index != -1) {
-        var updatedPost = Map<String, dynamic>.from(posts[index]);
-        List likes = List.from(updatedPost['likes'] ?? []);
-        if (isLikedNow == true) {
-          likes.add({'user_id': 'current_user'});
-        } else {
-          if (likes.isNotEmpty) likes.removeLast();
-        }
-        updatedPost['likes'] = likes;
-        updatedPost['is_liked_by_me'] = isLikedNow;
-        posts[index] = updatedPost;
-      }
-      return true;
-    }
-    return false;
+Future<bool> toggleLike(String postId) async {
+  bool? isLikedNow = await _apiService.toggleLike(postId);
+
+  if (isLikedNow == null) return false;
+
+  final index = posts.indexWhere((p) => p['id'] == postId);
+  if (index == -1) return false;
+
+  final updatedPost = Map<String, dynamic>.from(posts[index]);
+
+  // Gerçek kullanıcı ID'sini kullan
+  final myEmail = currentUserEmail.value;
+
+  final List likes = List.from(updatedPost['likes'] ?? []);
+
+  if (isLikedNow) {
+    // Beğen → listeye ekle
+    likes.add({'user_id': myEmail});
+  } else {
+    // Geri al → ID'ye göre bul ve sil
+    likes.removeWhere((like) => like['user_id'] == myEmail);
   }
 
+  updatedPost['likes'] = likes;
+  updatedPost['is_liked_by_me'] = isLikedNow;
+  posts[index] = updatedPost;
+
+  return true;
+}
   // 6. Yorum Ekle
   Future<bool> addComment(String postId, String content) async {
     bool success = await _apiService.addComment(postId, content);

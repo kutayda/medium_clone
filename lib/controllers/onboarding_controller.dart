@@ -26,18 +26,16 @@ class OnboardingController extends GetxController {
 
   void selectCategory(String categoryName) {
     if (selectedCategory.value == categoryName) {
-      selectedCategory.value = null; // Aynı şeye tıklarsa seçimi kaldır
+      selectedCategory.value = null; 
     } else {
       selectedCategory.value = categoryName;
     }
   }
 
-  // İŞTE SİHİRLİ VE DÜZELTİLMİŞ BÖLÜM BURASI 🪄
   Future<void> finishOnboarding() async {
     if (selectedCategory.value != null) {
       final prefs = await SharedPreferences.getInstance();
       
-      // FeedController bizden liste bekliyor. Biz de seçilen tek kategoriyi köşeli parantez içine alıp Liste olarak kaydediyoruz!
       await prefs.setStringList('my_categories', [selectedCategory.value!]);
     }
     

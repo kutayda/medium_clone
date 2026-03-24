@@ -11,7 +11,7 @@ class MediumCloneApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp( // Sadece burası değişti!
+    return GetMaterialApp(
       title: 'Medium Clone',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

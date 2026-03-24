@@ -68,7 +68,7 @@ class CreatePostController extends GetxController {
     List<String> categoryList = [selectedCategory.value!];
 
     if (isEditMode.value) {
-      // 📝 GÜNCELLEME İŞLEMİ
+      // GÜNCELLEME İŞLEMİ
       success = await _apiService.updatePost(
         editPostId.value,
         titleController.text.trim(),
@@ -77,7 +77,7 @@ class CreatePostController extends GetxController {
         imageUrlController.text.trim(),
       );
     } else {
-      // 🚀 YENİ PAYLAŞMA İŞLEMİ
+      // YENİ PAYLAŞMA İŞLEMİ
       success = await _apiService.createPost(
         titleController.text.trim(),
         contentController.text.trim(),

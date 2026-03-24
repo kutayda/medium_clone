@@ -27,7 +27,7 @@ class LoginController extends GetxController{
       //Giriş Yapma İşlemi
       bool success = await _apiService.login(email,password);
       if(success){
-        Get.snackbar('','Giriş Başarılı 🚀', backgroundColor: Colors.green, colorText: Colors.white);
+        Get.snackbar('','Giriş Başarılı r', backgroundColor: Colors.green, colorText: Colors.white);
         Get.offAll(() => const FeedScreen());
       } else {
         Get.snackbar('Hata', 'Giriş yapılırken bir hata oluştu', backgroundColor: Colors.red, colorText: Colors.white); 
@@ -47,7 +47,7 @@ class LoginController extends GetxController{
 
     isLoading.value = false;
   }
-
+  
   @override
   void onClose(){
     emailController.dispose();
