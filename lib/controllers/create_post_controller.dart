@@ -73,7 +73,7 @@ class CreatePostController extends GetxController {
         editPostId.value,
         titleController.text.trim(),
         contentController.text.trim(),
-        categoryList, // Kategorileri de gönderiyoruz!
+        categoryList, 
         imageUrlController.text.trim(),
       );
     } else {

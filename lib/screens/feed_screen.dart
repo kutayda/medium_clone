@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:medium_clone/controllers/theme_controller.dart';
 import '../controllers/feed_controller.dart';
 import 'login_screen.dart';
 import 'create_post_screen.dart';
+import 'post_detail_screen.dart';
 
 class FeedScreen extends StatelessWidget {
   const FeedScreen({super.key});
@@ -154,6 +156,22 @@ class FeedScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          Obx(() {
+            final themeController = Get.find<ThemeController>();
+            return IconButton(
+              icon: Icon(
+                themeController.isDarkMode.value
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+                color: themeController.isDarkMode.value
+                    ? Colors.yellow
+                    : Colors.black87,
+              ),
+              onPressed: () {
+                themeController.toggleTheme();
+              },
+            );
+          }),
           // Çıkış Butonu (Sadece giriş yapılmışsa görünür)
           Obx(() {
             if (controller.currentUserEmail.value != null) {
@@ -168,7 +186,9 @@ class FeedScreen extends StatelessWidget {
                     textCancel: 'İptal',
                     confirmTextColor: Colors.white,
                     buttonColor: Colors.red,
-                    cancelTextColor: Colors.black,
+                    cancelTextColor: Get.isDarkMode
+                        ? Colors.white
+                        : Colors.black,
                     onConfirm: () async {
                       Get.back(); // Kutuyu kapat
                       await controller.logout();
@@ -265,272 +285,288 @@ class FeedScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // YAZAR, TARİH VE SİLME BUTONU
-                              // YAZAR, TARİH, DÜZENLE VE SİLME BUTONLARI
-                              Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundColor: Colors.deepPurple,
-                                      child: Text(
-                                        authorName[0].toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                          // 🚨 TÜM KARTI TIKLANABİLİR YAPAN INKWELL 🚨
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () {
+                              // Tıklanınca detay sayfasına git
+                              Get.to(() => PostDetailScreen(post: post));
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // --- YAZAR, TARİH VE BUTONLAR ---
+                                Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: Colors.deepPurple,
+                                        child: Text(
+                                          authorName[0].toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          authorName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        Text(
-                                          formattedDate,
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Spacer(), // Yazılarla butonların arasını sonuna kadar açar
-                                    // SADECE POST SAHİBİNE GÖRÜNEN BUTONLAR GRUBU
-                                    if (controller.currentUserEmail.value !=
-                                            null &&
-                                        authorData != null &&
-                                        authorData['email'] ==
-                                            controller.currentUserEmail.value)
-                                      Row(
-                                        mainAxisSize: MainAxisSize
-                                            .min, // Sadece içindekiler kadar yer kapla
+                                      const SizedBox(width: 12),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          // 1. DÜZENLE BUTONU
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.edit_outlined,
-                                              color: Colors.blue,
+                                          Text(
+                                            authorName,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
                                             ),
-                                            onPressed: () {
-                                              // Sihir burada: Sayfayı açarken içine eski yazıyı (post) fırlatıyoruz!
-                                              Get.to(
-                                                () => const CreatePostScreen(),
-                                                arguments: post,
-                                              );
-                                            },
                                           ),
-
-                                          // 2. SİLME BUTONU
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.red,
+                                          Text(
+                                            formattedDate,
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 12,
                                             ),
-                                            onPressed: () {
-                                              // Dialog açılırken eski açık diyalogların olmadığından emin olmak için engelleyici kullanıyoruz
-                                              Get.dialog(
-                                                AlertDialog(
-                                                  title: const Text(
-                                                    'Yazıyı Sil',
-                                                  ),
-                                                  content: const Text(
-                                                    'Bu yazıyı kalıcı olarak silmek istediğinize emin misiniz?',
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () =>
-                                                          Get.back(), // Sadece kutuyu kapat
-                                                      child: const Text(
-                                                        'İptal',
-                                                        style: TextStyle(
-                                                          color: Colors.black,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    ElevatedButton(
-                                                      style:
-                                                          ElevatedButton.styleFrom(
-                                                            backgroundColor:
-                                                                Colors.red,
-                                                          ),
-                                                      onPressed: () async {
-                                                        // 1. Kutuyu güvenlice kapat
-                                                        Get.back();
-
-                                                        // 2. Silme işlemini başlat (Loading süresince ekran donmaz)
-                                                        bool success =
-                                                            await controller
-                                                                .deletePost(
-                                                                  post['id'],
-                                                                );
-
-                                                        if (success) {
-                                                          Get.snackbar(
-                                                            'Silindi',
-                                                            'Yazınız başarıyla silindi.',
-                                                            backgroundColor:
-                                                                Colors.green,
-                                                            colorText:
-                                                                Colors.white,
-                                                          );
-                                                        } else {
-                                                          Get.snackbar(
-                                                            'Hata',
-                                                            'Yazı silinemedi.',
-                                                            backgroundColor:
-                                                                Colors.red,
-                                                            colorText:
-                                                                Colors.white,
-                                                          );
-                                                        }
-                                                      },
-                                                      child: const Text(
-                                                        'Evet, Sil',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                barrierDismissible:
-                                                    false, // Dışarı tıklayınca kapanmasın (kullanıcı karar versin)
-                                              );
-                                            },
                                           ),
                                         ],
                                       ),
-                                  ],
-                                ),
-                              ),
-                              // KAPAK FOTOĞRAFI
-                              if (imageUrl != null)
-                                Image.network(
-                                  imageUrl,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.cover,
+                                      const Spacer(),
+
+                                      // SADECE POST SAHİBİNE GÖRÜNEN BUTONLAR GRUBU
+                                      if (controller.currentUserEmail.value !=
+                                              null &&
+                                          authorData != null &&
+                                          authorData['email'] ==
+                                              controller.currentUserEmail.value)
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // 1. DÜZENLE BUTONU
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.edit_outlined,
+                                                color: Colors.blue,
+                                              ),
+                                              onPressed: () {
+                                                Get.to(
+                                                  () =>
+                                                      const CreatePostScreen(),
+                                                  arguments: post,
+                                                );
+                                              },
+                                            ),
+
+                                            // 2. SİLME BUTONU
+                                            IconButton(
+                                              icon: const Icon(
+                                                Icons.delete_outline,
+                                                color: Colors.red,
+                                              ),
+                                              onPressed: () {
+                                                Get.dialog(
+                                                  AlertDialog(
+                                                    title: const Text(
+                                                      'Yazıyı Sil',
+                                                    ),
+                                                    content: const Text(
+                                                      'Bu yazıyı kalıcı olarak silmek istediğinize emin misiniz?',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () =>
+                                                            Get.back(),
+                                                        child: Text(
+                                                          'İptal',
+                                                          // Karanlık moda göre İptal yazısının rengi
+                                                          style: TextStyle(
+                                                            color:
+                                                                Get.isDarkMode
+                                                                ? Colors.white
+                                                                : Colors.black,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      ElevatedButton(
+                                                        style:
+                                                            ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                            ),
+                                                        onPressed: () async {
+                                                          Get.back(); // Kutuyu kapat
+                                                          bool success =
+                                                              await controller
+                                                                  .deletePost(
+                                                                    post['id'],
+                                                                  );
+                                                          if (success) {
+                                                            Get.snackbar(
+                                                              'Silindi',
+                                                              'Yazınız başarıyla silindi.',
+                                                              backgroundColor:
+                                                                  Colors.green,
+                                                              colorText:
+                                                                  Colors.white,
+                                                            );
+                                                          } else {
+                                                            Get.snackbar(
+                                                              'Hata',
+                                                              'Yazı silinemedi.',
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                              colorText:
+                                                                  Colors.white,
+                                                            );
+                                                          }
+                                                        },
+                                                        child: const Text(
+                                                          'Evet, Sil',
+                                                          style: TextStyle(
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  barrierDismissible: false,
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                    ],
+                                  ),
                                 ),
 
-                              // BAŞLIK VE İÇERİK
-                              Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      post['title'],
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      post['content'],
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.grey[800],
-                                        fontSize: 15,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                                // --- KAPAK FOTOĞRAFI ---
+                                if (imageUrl != null)
+                                  Image.network(
+                                    imageUrl,
+                                    width: double.infinity,
+                                    height: 200,
+                                    fit: BoxFit.cover,
+                                  ),
 
-                              const Divider(height: 1),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                  vertical: 12.0,
+                                // --- BAŞLIK VE İÇERİK ---
+                                Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        post['title'],
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        post['content'],
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          // Karanlık moda göre içerik yazısı rengi
+                                          color: Get.isDarkMode
+                                              ? Colors.white70
+                                              : Colors.grey[800],
+                                          fontSize: 15,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        if (controller.currentUserEmail.value ==
-                                            null) {
-                                          Get.snackbar(
-                                            'Giriş Gerekli',
-                                            'Yazıları alkışlamak için giriş yapmalısın.',
-                                            backgroundColor: Colors.orange,
-                                            colorText: Colors.white,
-                                          );
-                                          return;
-                                        }
-                                        controller.toggleLike(post['id']);
-                                      },
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            post['is_liked_by_me'] == true
-                                                ? Icons.recommend
-                                                : Icons.recommend_outlined,
-                                            size: 24,
-                                            color:
-                                                post['is_liked_by_me'] == true
-                                                ? Colors.red
-                                                : Colors.grey,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            '${post['likes']?.length ?? 0}',
-                                            style: TextStyle(
+
+                                const Divider(height: 1),
+
+                                // --- BEĞENİ VE YORUM İKONLARI ---
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                    vertical: 12.0,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          if (controller
+                                                  .currentUserEmail
+                                                  .value ==
+                                              null) {
+                                            Get.snackbar(
+                                              'Giriş Gerekli',
+                                              'Yazıları alkışlamak için giriş yapmalısın.',
+                                              backgroundColor: Colors.orange,
+                                              colorText: Colors.white,
+                                            );
+                                            return;
+                                          }
+                                          controller.toggleLike(post['id']);
+                                        },
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              post['is_liked_by_me'] == true
+                                                  ? Icons.recommend
+                                                  : Icons.recommend_outlined,
+                                              size: 24,
                                               color:
                                                   post['is_liked_by_me'] == true
                                                   ? Colors.red
                                                   : Colors.grey,
-                                              fontSize: 16,
-                                              fontWeight:
-                                                  post['is_liked_by_me'] == true
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              '${post['likes']?.length ?? 0}',
+                                              style: TextStyle(
+                                                color:
+                                                    post['is_liked_by_me'] ==
+                                                        true
+                                                    ? Colors.red
+                                                    : Colors.grey,
+                                                fontSize: 16,
+                                                fontWeight:
+                                                    post['is_liked_by_me'] ==
+                                                        true
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 24),
-                                    InkWell(
-                                      onTap: () => _showCommentSheet(
-                                        context,
-                                        controller,
-                                        post,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.chat_bubble_outline,
-                                            size: 22,
-                                            color: Colors.grey,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            '${post['comments']?.length ?? 0}',
-                                            style: const TextStyle(
+                                      const SizedBox(width: 24),
+                                      InkWell(
+                                        onTap: () => _showCommentSheet(
+                                          context,
+                                          controller,
+                                          post,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.chat_bubble_outline,
+                                              size: 22,
                                               color: Colors.grey,
-                                              fontSize: 16,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              '${post['comments']?.length ?? 0}',
+                                              style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       },
