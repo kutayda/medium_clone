@@ -6,12 +6,10 @@ import '../controllers/feed_controller.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../post/screens/create_post_screen.dart';
 import '../../post/screens/post_detail_screen.dart';
-import '../../post/widgets/comment_sheet.dart'; // ✅ YENİ IMPORT
+import '../../post/widgets/comment_sheet.dart';
 
 class FeedScreen extends StatelessWidget {
   const FeedScreen({super.key});
-
-  // ❌ _showCommentSheet metodu kaldırıldı, artık CommentSheet.show() kullanılıyor
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +33,7 @@ class FeedScreen extends StatelessWidget {
                     ? Colors.yellow
                     : Colors.black87,
               ),
-              onPressed: () {
-                themeController.toggleTheme();
-              },
+              onPressed: () => themeController.toggleTheme(),
             );
           }),
           Obx(() {
@@ -53,8 +49,9 @@ class FeedScreen extends StatelessWidget {
                     textCancel: 'İptal',
                     confirmTextColor: Colors.white,
                     buttonColor: Colors.red,
-                    cancelTextColor:
-                        Get.isDarkMode ? Colors.white : Colors.black,
+                    cancelTextColor: Get.isDarkMode
+                        ? Colors.white
+                        : Colors.black,
                     onConfirm: () async {
                       Get.back();
                       await controller.logout();
@@ -87,30 +84,51 @@ class FeedScreen extends StatelessWidget {
               height: 60,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 itemCount: controller.categories.length + 1,
                 itemBuilder: (context, index) {
                   if (index == 0) {
+                    // TÜMÜ butonu
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
-                      child: ChoiceChip(
-                        label: const Text('Tümü'),
-                        selected: controller.selectedCategory.value == null,
-                        onSelected: (_) => controller.filterByCategory(null),
+                      child: Obx(
+                        () => FilterChip(
+                          label: const Text('Tümü'),
+                          // ✅ Hiç seçim yoksa "Tümü" seçili görünür
+                          selected: controller.selectedCategories.isEmpty,
+                          onSelected: (_) =>
+                              controller.toggleCategoryFilter('Tümü'),
+                        ),
                       ),
                     );
                   }
+
                   final category = controller.categories[index - 1];
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
-                    child: ChoiceChip(
-                      label: Text(category['name']),
-                      selected:
-                          controller.selectedCategory.value == category['name'],
-                      onSelected: (_) =>
-                          controller.filterByCategory(category['name']),
-                    ),
+                    child: Obx(() {
+                      final isSelected = controller.selectedCategories.contains(
+                        category['name'],
+                      );
+                      return FilterChip(
+                        label: Text(category['name']),
+                        // ✅ Liste içinde var mı diye kontrol ediliyor
+                        selected: isSelected,
+                        onSelected: (_) =>
+                            controller.toggleCategoryFilter(category['name']),
+                        selectedColor: Colors.deepPurple,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : null,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      );
+                    }),
                   );
                 },
               ),
@@ -134,22 +152,24 @@ class FeedScreen extends StatelessWidget {
                                   : 'Anonim');
 
                         final rawDate = DateTime.parse(post['created_at']);
-                        final formattedDate =
-                            DateFormat('dd MMM yyyy').format(rawDate);
+                        final formattedDate = DateFormat(
+                          'dd MMM yyyy',
+                        ).format(rawDate);
                         final imageUrl = post['image_url'];
 
                         return Card(
                           margin: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              Get.to(() => PostDetailScreen(post: post));
-                            },
+                            onTap: () =>
+                                Get.to(() => PostDetailScreen(post: post)),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -163,7 +183,8 @@ class FeedScreen extends StatelessWidget {
                                         child: Text(
                                           authorName[0].toUpperCase(),
                                           style: const TextStyle(
-                                              color: Colors.white),
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -174,14 +195,16 @@ class FeedScreen extends StatelessWidget {
                                           Text(
                                             authorName,
                                             style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
                                           ),
                                           Text(
                                             formattedDate,
                                             style: const TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 12),
+                                              color: Colors.grey,
+                                              fontSize: 12,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -198,27 +221,28 @@ class FeedScreen extends StatelessWidget {
                                           children: [
                                             IconButton(
                                               icon: const Icon(
-                                                  Icons.edit_outlined,
-                                                  color: Colors.blue),
-                                              onPressed: () {
-                                                Get.to(
-                                                  () =>
-                                                      const CreatePostScreen(),
-                                                  arguments: post,
-                                                );
-                                              },
+                                                Icons.edit_outlined,
+                                                color: Colors.blue,
+                                              ),
+                                              onPressed: () => Get.to(
+                                                () => const CreatePostScreen(),
+                                                arguments: post,
+                                              ),
                                             ),
                                             IconButton(
                                               icon: const Icon(
-                                                  Icons.delete_outline,
-                                                  color: Colors.red),
+                                                Icons.delete_outline,
+                                                color: Colors.red,
+                                              ),
                                               onPressed: () {
                                                 Get.dialog(
                                                   AlertDialog(
                                                     title: const Text(
-                                                        'Yazıyı Sil'),
+                                                      'Yazıyı Sil',
+                                                    ),
                                                     content: const Text(
-                                                        'Bu yazıyı kalıcı olarak silmek istediğinize emin misiniz?'),
+                                                      'Bu yazıyı kalıcı olarak silmek istediğinize emin misiniz?',
+                                                    ),
                                                     actions: [
                                                       TextButton(
                                                         onPressed: () =>
@@ -226,49 +250,46 @@ class FeedScreen extends StatelessWidget {
                                                         child: Text(
                                                           'İptal',
                                                           style: TextStyle(
-                                                            color: Get.isDarkMode
+                                                            color:
+                                                                Get.isDarkMode
                                                                 ? Colors.white
                                                                 : Colors.black,
                                                           ),
                                                         ),
                                                       ),
                                                       ElevatedButton(
-                                                        style: ElevatedButton
-                                                            .styleFrom(
-                                                                backgroundColor:
-                                                                    Colors.red),
+                                                        style:
+                                                            ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                            ),
                                                         onPressed: () async {
                                                           Get.back();
                                                           bool success =
                                                               await controller
                                                                   .deletePost(
-                                                                      post[
-                                                                          'id']);
-                                                          if (success) {
-                                                            Get.snackbar(
-                                                              'Silindi',
-                                                              'Yazınız başarıyla silindi.',
-                                                              backgroundColor:
-                                                                  Colors.green,
-                                                              colorText:
-                                                                  Colors.white,
-                                                            );
-                                                          } else {
-                                                            Get.snackbar(
-                                                              'Hata',
-                                                              'Yazı silinemedi.',
-                                                              backgroundColor:
-                                                                  Colors.red,
-                                                              colorText:
-                                                                  Colors.white,
-                                                            );
-                                                          }
+                                                                    post['id'],
+                                                                  );
+                                                          Get.snackbar(
+                                                            success
+                                                                ? 'Silindi'
+                                                                : 'Hata',
+                                                            success
+                                                                ? 'Yazınız başarıyla silindi.'
+                                                                : 'Yazı silinemedi.',
+                                                            backgroundColor:
+                                                                success
+                                                                ? Colors.green
+                                                                : Colors.red,
+                                                            colorText:
+                                                                Colors.white,
+                                                          );
                                                         },
                                                         child: const Text(
                                                           'Evet, Sil',
                                                           style: TextStyle(
-                                                              color:
-                                                                  Colors.white),
+                                                            color: Colors.white,
+                                                          ),
                                                         ),
                                                       ),
                                                     ],
@@ -302,8 +323,9 @@ class FeedScreen extends StatelessWidget {
                                       Text(
                                         post['title'],
                                         style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 20),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                        ),
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
@@ -327,13 +349,16 @@ class FeedScreen extends StatelessWidget {
                                 // --- BEĞENİ VE YORUM İKONLARI ---
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0, vertical: 12.0),
+                                    horizontal: 16.0,
+                                    vertical: 12.0,
+                                  ),
                                   child: Row(
                                     children: [
                                       InkWell(
                                         onTap: () {
                                           if (controller
-                                                  .currentUserEmail.value ==
+                                                  .currentUserEmail
+                                                  .value ==
                                               null) {
                                             Get.snackbar(
                                               'Giriş Gerekli',
@@ -354,8 +379,8 @@ class FeedScreen extends StatelessWidget {
                                               size: 24,
                                               color:
                                                   post['is_liked_by_me'] == true
-                                                      ? Colors.red
-                                                      : Colors.grey,
+                                                  ? Colors.red
+                                                  : Colors.grey,
                                             ),
                                             const SizedBox(width: 6),
                                             Text(
@@ -363,15 +388,15 @@ class FeedScreen extends StatelessWidget {
                                               style: TextStyle(
                                                 color:
                                                     post['is_liked_by_me'] ==
-                                                            true
-                                                        ? Colors.red
-                                                        : Colors.grey,
+                                                        true
+                                                    ? Colors.red
+                                                    : Colors.grey,
                                                 fontSize: 16,
                                                 fontWeight:
                                                     post['is_liked_by_me'] ==
-                                                            true
-                                                        ? FontWeight.bold
-                                                        : FontWeight.normal,
+                                                        true
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
                                               ),
                                             ),
                                           ],
@@ -379,21 +404,25 @@ class FeedScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 24),
                                       InkWell(
-                                        // ✅ CommentSheet.show() kullanılıyor
                                         onTap: () => CommentSheet.show(
-                                            context, controller, post),
+                                          context,
+                                          controller,
+                                          post,
+                                        ),
                                         child: Row(
                                           children: [
                                             const Icon(
-                                                Icons.chat_bubble_outline,
-                                                size: 22,
-                                                color: Colors.grey),
+                                              Icons.chat_bubble_outline,
+                                              size: 22,
+                                              color: Colors.grey,
+                                            ),
                                             const SizedBox(width: 6),
                                             Text(
                                               '${post['comments']?.length ?? 0}',
                                               style: const TextStyle(
-                                                  color: Colors.grey,
-                                                  fontSize: 16),
+                                                color: Colors.grey,
+                                                fontSize: 16,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -412,7 +441,6 @@ class FeedScreen extends StatelessWidget {
         );
       }),
 
-      // YENİ POST EKLEME BUTONU
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           if (controller.currentUserEmail.value == null) {

@@ -7,13 +7,10 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Controller'ı arayüze bağla (Dependency Injection)
     final OnboardingController controller = Get.put(OnboardingController());
 
     return Scaffold(
       body: SafeArea(
-        // Obx widget'ı, içindeki ".value" değişkenlerinden biri değiştiğinde 
-        // SADECE kendi içindeki kısmı yeniden çizer. Tüm sayfayı değil!
         child: Obx(() {
           if (controller.isLoading.value) {
             return const Center(child: CircularProgressIndicator());
@@ -32,37 +29,84 @@ class OnboardingScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Sana özel bir akış (feed) oluşturmamız için bir kategori seç.',
+                  'Sana özel bir akış oluşturmamız için\nbir veya daha fazla kategori seç.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 40),
-                
+
+                // ✅ Çoklu seçim destekli kategori chipleri
                 Wrap(
                   spacing: 12.0,
                   runSpacing: 12.0,
                   alignment: WrapAlignment.center,
                   children: controller.categories.map((category) {
                     final categoryName = category['name'];
-                    // Seçili olup olmadığını ".value" üzerinden kontrol ediyoruz
-                    final isSelected = controller.selectedCategory.value == categoryName;
-                    
-                    return ChoiceChip(
-                      label: Text(categoryName, style: const TextStyle(fontSize: 16)),
+                    final isSelected = controller.selectedCategories.contains(
+                      categoryName,
+                    );
+
+                    return FilterChip(
+                      label: Text(
+                        categoryName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: isSelected ? Colors.white : null,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
                       selected: isSelected,
-                      onSelected: (_) => controller.selectCategory(categoryName),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      onSelected: (_) =>
+                          controller.toggleCategory(categoryName),
+                      selectedColor: Colors.deepPurple,
+                      checkmarkColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     );
                   }).toList(),
                 ),
+
+                const SizedBox(height: 24),
+
+                // ✅ Kaç kategori seçildiğini gösteren bilgi yazısı
+                Obx(
+                  () => controller.selectedCategories.isEmpty
+                      ? const Text(
+                          'En az bir kategori seçmelisin.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.orange, fontSize: 14),
+                        )
+                      : Text(
+                          '${controller.selectedCategories.length} kategori seçildi: '
+                          '${controller.selectedCategories.join(', ')}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.deepPurple,
+                            fontSize: 14,
+                          ),
+                        ),
+                ),
+
                 const Spacer(),
-                
-                ElevatedButton(
-                  onPressed: controller.finishOnboarding,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+
+                // ✅ Seçim yoksa buton devre dışı
+                Obx(
+                  () => ElevatedButton(
+                    onPressed: controller.selectedCategories.isEmpty
+                        ? null
+                        : controller.finishOnboarding,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text(
+                      'Devam Et',
+                      style: TextStyle(fontSize: 18),
+                    ),
                   ),
-                  child: const Text('Devam Et', style: TextStyle(fontSize: 18)),
                 ),
               ],
             ),

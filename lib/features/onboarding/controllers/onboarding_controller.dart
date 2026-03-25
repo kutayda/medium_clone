@@ -6,15 +6,15 @@ import '../../feed/screens/feed_screen.dart';
 class OnboardingController extends GetxController {
   final ApiService _apiService = ApiService();
 
-  // Değişkenlerin sonuna ".obs" (observable) ekleyerek onları reaktif (dinlenebilir) yapıyoruz
   var categories = [].obs;
-  var selectedCategory = RxnString(); 
+  // ✅ Tek seçim yerine çoklu seçim listesi
+  var selectedCategories = <String>[].obs;
   var isLoading = true.obs;
 
   @override
   void onInit() {
     super.onInit();
-    loadCategories(); 
+    loadCategories();
   }
 
   Future<void> loadCategories() async {
@@ -24,21 +24,22 @@ class OnboardingController extends GetxController {
     isLoading.value = false;
   }
 
-  void selectCategory(String categoryName) {
-    if (selectedCategory.value == categoryName) {
-      selectedCategory.value = null; 
+  // ✅ Seçili ise kaldır, değilse ekle
+  void toggleCategory(String categoryName) {
+    if (selectedCategories.contains(categoryName)) {
+      selectedCategories.remove(categoryName);
     } else {
-      selectedCategory.value = categoryName;
+      selectedCategories.add(categoryName);
     }
   }
 
   Future<void> finishOnboarding() async {
-    if (selectedCategory.value != null) {
+    if (selectedCategories.isNotEmpty) {
       final prefs = await SharedPreferences.getInstance();
-      
-      await prefs.setStringList('my_categories', [selectedCategory.value!]);
+      // ✅ Tüm seçili kategorileri kaydet
+      await prefs.setStringList('my_categories', selectedCategories.toList());
     }
-    
-    Get.offAll(() => const FeedScreen()); 
+
+    Get.offAll(() => const FeedScreen());
   }
 }

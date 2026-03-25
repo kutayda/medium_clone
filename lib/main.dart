@@ -49,7 +49,6 @@ class MediumCloneApp extends StatelessWidget {
         ),
       ),
 
-      // Uygulama açılışında kontrolcüdeki değere göre temayı belirliyoruz
       themeMode: themeController.isDarkMode.value ? ThemeMode.dark : ThemeMode.light,
 
       home: const OnboardingScreen(),
