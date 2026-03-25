@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:medium_clone/features/onboarding/screens/onboarding_screen.dart';
 import 'core/theme_controller.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   
   // Tema kontrolcüsünü uygulama başlar başlamaz ayağa kaldırıyoruz
   Get.put(ThemeController());

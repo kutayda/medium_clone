@@ -122,11 +122,25 @@ Future<bool> toggleLike(String postId) async {
   return true;
 }
   // 6. Yorum Ekle
-  Future<bool> addComment(String postId, String content) async {
-    bool success = await _apiService.addComment(postId, content);
-    if (success) {
-      loadData();
+Future<bool> addComment(String postId, String content) async {
+  bool success = await _apiService.addComment(postId, content);
+  if (success) {
+    final index = posts.indexWhere((p) => p['id'] == postId);
+    if (index != -1) {
+      final updatedPost = Map<String, dynamic>.from(posts[index]);
+      final List comments = List.from(updatedPost['comments'] ?? []);
+      
+      // Yeni yorumu local listeye ekle
+      comments.add({
+        'content': content,
+        'author': {'email': currentUserEmail.value, 'username': null},
+      });
+      
+      updatedPost['comments'] = comments;
+      posts[index] = updatedPost; // Sadece bu post güncelleniyor
     }
-    return success;
   }
+  return success;
+}
+
 }
