@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/api_service.dart';
-import '../screens/feed_screen.dart';
+import '../../../core/api_service.dart';
+import '../../feed/screens/feed_screen.dart';
 
 class OnboardingController extends GetxController {
   final ApiService _apiService = ApiService();

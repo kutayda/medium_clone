@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:medium_clone/screens/onboarding_screen.dart';
-import 'controllers/theme_controller.dart';
+import 'package:medium_clone/features/onboarding/screens/onboarding_screen.dart';
+import 'core/theme_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

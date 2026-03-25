@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import '../controllers/feed_controller.dart';
+import '../../feed/controllers/feed_controller.dart';
 
 class PostDetailScreen extends StatelessWidget {
   final dynamic post;

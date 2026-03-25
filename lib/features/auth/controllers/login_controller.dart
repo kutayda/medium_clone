@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../services/api_service.dart';
-import '../screens/feed_screen.dart';
+import '../../../core/api_service.dart';
+import '../../feed/screens/feed_screen.dart';
 
 class LoginController extends GetxController{
   final ApiService _apiService = ApiService();

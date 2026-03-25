@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
-import 'feed_controller.dart';
+import '../../../core/api_service.dart';
+import '../../feed/controllers/feed_controller.dart';
 
 class CreatePostController extends GetxController {
   final ApiService _apiService = ApiService();

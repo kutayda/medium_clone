@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:medium_clone/controllers/theme_controller.dart';
+import 'package:medium_clone/core/theme_controller.dart';
 import '../controllers/feed_controller.dart';
-import 'login_screen.dart';
-import 'create_post_screen.dart';
-import 'post_detail_screen.dart';
+import '../../auth/screens/login_screen.dart';
+import '../../post/screens/create_post_screen.dart';
+import '../../post/screens/post_detail_screen.dart';
 
 class FeedScreen extends StatelessWidget {
   const FeedScreen({super.key});
