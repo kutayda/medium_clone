@@ -41,5 +41,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Environment Variables   ← Bunu ekle
-.env                      ← Bunu ekle
+# Environment Variables
+.env                        
