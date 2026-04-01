@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:medium_clone/core/theme_controller.dart';
+import 'package:medium_clone/core/api_service.dart';
+import '../../../core/theme_controller.dart';
 import '../controllers/feed_controller.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../post/screens/create_post_screen.dart';
 import '../../post/screens/post_detail_screen.dart';
-import '../../post/widgets/comment_sheet.dart';
 
 class FeedScreen extends StatelessWidget {
   const FeedScreen({super.key});
@@ -22,6 +22,7 @@ class FeedScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          // TEMA BUTONU
           Obx(() {
             final themeController = Get.find<ThemeController>();
             return IconButton(
@@ -36,6 +37,7 @@ class FeedScreen extends StatelessWidget {
               onPressed: () => themeController.toggleTheme(),
             );
           }),
+          // ÇIKIŞ BUTONU
           Obx(() {
             if (controller.currentUserEmail.value != null) {
               return IconButton(
@@ -53,8 +55,16 @@ class FeedScreen extends StatelessWidget {
                         ? Colors.white
                         : Colors.black,
                     onConfirm: () async {
-                      Get.back();
-                      await controller.logout();
+                      // 1. Token'ı ve email'i cihazdan KALICI olarak siliyoruz
+                      await ApiService().logout();
+
+                      // 2. Kullanıcıyı uygulamadan atıp Login (Giriş) ekranına yönlendiriyoruz.
+                      // Get.offAll() kullanıyoruz ki sayfalar arası "Geri" tuşuna basıp tekrar içeri giremesin.
+                      Get.offAll(
+                        () => const LoginScreen(),
+                      ); // Kendi giriş sayfanın adını yaz (Örn: LoginView vb. olabilir)
+
+                      // 3. Ekrana veda mesajını basıyoruz
                       Get.snackbar(
                         'Görüşürüz!',
                         'Başarıyla çıkış yapıldı.',
@@ -79,7 +89,7 @@ class FeedScreen extends StatelessWidget {
 
         return Column(
           children: [
-            // 1. KATEGORİ ÇİPLERİ
+            // KATEGORİ ÇİPLERİ (Yatay Liste)
             SizedBox(
               height: 60,
               child: ListView.builder(
@@ -91,56 +101,66 @@ class FeedScreen extends StatelessWidget {
                 itemCount: controller.categories.length + 1,
                 itemBuilder: (context, index) {
                   if (index == 0) {
-                    // TÜMÜ butonu
                     return Padding(
                       padding: const EdgeInsets.only(right: 8.0),
-                      child: Obx(
-                        () => FilterChip(
-                          label: const Text('Tümü'),
-                          // ✅ Hiç seçim yoksa "Tümü" seçili görünür
-                          selected: controller.selectedCategories.isEmpty,
-                          onSelected: (_) =>
-                              controller.toggleCategoryFilter('Tümü'),
-                        ),
+                      child: ChoiceChip(
+                        label: const Text('Tümü'),
+                        selected: controller.selectedCategories.isEmpty,
+                        onSelected: (_) => controller.filterByCategory(null),
                       ),
                     );
                   }
-
                   final category = controller.categories[index - 1];
+                  final isSelected = controller.selectedCategories.contains(
+                    category['name'],
+                  );
                   return Padding(
                     padding: const EdgeInsets.only(right: 8.0),
-                    child: Obx(() {
-                      final isSelected = controller.selectedCategories.contains(
-                        category['name'],
-                      );
-                      return FilterChip(
-                        label: Text(category['name']),
-                        // ✅ Liste içinde var mı diye kontrol ediliyor
-                        selected: isSelected,
-                        onSelected: (_) =>
-                            controller.toggleCategoryFilter(category['name']),
-                        selectedColor: Colors.deepPurple,
-                        checkmarkColor: Colors.white,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : null,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                      );
-                    }),
+                    child: ChoiceChip(
+                      label: Text(category['name']),
+                      selected: isSelected,
+                      onSelected: (_) =>
+                          controller.filterByCategory(category['name']),
+                    ),
                   );
                 },
               ),
             ),
 
-            // 2. POSTLARIN LİSTESİ
+            // YAZILARIN LİSTESİ (Sonsuz Kaydırma Ekli)
             Expanded(
               child: controller.posts.isEmpty
                   ? const Center(child: Text('Bu kategoride henüz yazı yok.'))
                   : ListView.builder(
-                      itemCount: controller.posts.length,
+                      controller: controller
+                          .scrollController, // 🚨 SCROLL DİNLEYİCİSİ BAĞLANDI
+                      // 🚨 En alta loading ikonu veya "Bitti" yazısı koymak için eleman sayısını 1 artırıyoruz
+                      itemCount: controller.posts.length + 1,
                       itemBuilder: (context, index) {
+                        // EĞER LİSTENİN EN SONUNA (EKTRA EKLEDİĞİMİZ KISMA) GELDİYSEK
+                        if (index == controller.posts.length) {
+                          return Obx(() {
+                            if (controller.isFetchingMore.value) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 24),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            if (!controller.hasMoreData.value &&
+                                controller.posts.isNotEmpty) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 24,
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          });
+                        }
+
+                        // NORMAL POST KARTI OLUŞTURMA
                         final post = controller.posts[index];
                         final authorData = post['author'];
                         final authorName =
@@ -168,12 +188,12 @@ class FeedScreen extends StatelessWidget {
                           ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(16),
-                            onTap: () =>
-                                Get.to(() => PostDetailScreen(post: post)),
+                            onTap: () {
+                              Get.to(() => PostDetailScreen(post: post));
+                            },
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // --- YAZAR, TARİH VE BUTONLAR ---
                                 Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Row(
@@ -209,8 +229,6 @@ class FeedScreen extends StatelessWidget {
                                         ],
                                       ),
                                       const Spacer(),
-
-                                      // SADECE POST SAHİBİNE GÖRÜNEN BUTONLAR
                                       if (controller.currentUserEmail.value !=
                                               null &&
                                           authorData != null &&
@@ -270,20 +288,16 @@ class FeedScreen extends StatelessWidget {
                                                                   .deletePost(
                                                                     post['id'],
                                                                   );
-                                                          Get.snackbar(
-                                                            success
-                                                                ? 'Silindi'
-                                                                : 'Hata',
-                                                            success
-                                                                ? 'Yazınız başarıyla silindi.'
-                                                                : 'Yazı silinemedi.',
-                                                            backgroundColor:
-                                                                success
-                                                                ? Colors.green
-                                                                : Colors.red,
-                                                            colorText:
-                                                                Colors.white,
-                                                          );
+                                                          if (success) {
+                                                            Get.snackbar(
+                                                              'Silindi',
+                                                              'Yazınız silindi.',
+                                                              backgroundColor:
+                                                                  Colors.green,
+                                                              colorText:
+                                                                  Colors.white,
+                                                            );
+                                                          }
                                                         },
                                                         child: const Text(
                                                           'Evet, Sil',
@@ -303,8 +317,6 @@ class FeedScreen extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-
-                                // --- KAPAK FOTOĞRAFI ---
                                 if (imageUrl != null)
                                   Image.network(
                                     imageUrl,
@@ -312,8 +324,6 @@ class FeedScreen extends StatelessWidget {
                                     height: 200,
                                     fit: BoxFit.cover,
                                   ),
-
-                                // --- BAŞLIK VE İÇERİK ---
                                 Padding(
                                   padding: const EdgeInsets.all(16.0),
                                   child: Column(
@@ -343,10 +353,7 @@ class FeedScreen extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-
                                 const Divider(height: 1),
-
-                                // --- BEĞENİ VE YORUM İKONLARI ---
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16.0,
@@ -404,11 +411,8 @@ class FeedScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 24),
                                       InkWell(
-                                        onTap: () => CommentSheet.show(
-                                          context,
-                                          controller,
-                                          post,
-                                        ),
+                                        // onTap: () => _showCommentSheet(context, controller, post), // Comment sheet metodun varsa burayı aç
+                                        onTap: () {},
                                         child: Row(
                                           children: [
                                             const Icon(
@@ -450,9 +454,11 @@ class FeedScreen extends StatelessWidget {
               backgroundColor: Colors.orange,
               colorText: Colors.white,
             );
-            Get.to(() => const LoginScreen());
+            Get.to(() => const LoginScreen()); // Yolunu projene göre düzelt
           } else {
-            Get.to(() => const CreatePostScreen());
+            Get.to(
+              () => const CreatePostScreen(),
+            ); // Yolunu projene göre düzelt
           }
         },
         child: const Icon(Icons.add),

@@ -8,8 +8,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 
 class ApiService {
-  // ✅ baseUrl ve imgbbApiKey artık .env'den okunuyor
-  static final String baseUrl = dotenv.env['BASE_URL'] ?? 'http://10.0.2.2:8000';
+  static final String baseUrl =
+      dotenv.env['BASE_URL'] ?? 'http://192.168.10.186:8000';
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   // 1. GİRİŞ YAPMA
@@ -34,7 +34,7 @@ class ApiService {
     }
   }
 
-  // 2. KAYIT OLMA ✅ try-catch eklendi
+  // 2. KAYIT OLMA 
   Future<bool> register(String email, String password, String username) async {
     try {
       final response = await http.post(
@@ -81,16 +81,27 @@ class ApiService {
   }
 
   // 6. AKIŞI GETİR (Filtreli ve Güvenli URL)
-  Future<List<dynamic>?> getFeed({List<String>? selectedCategories}) async {
+  Future<List<dynamic>?> getFeed({
+    List<String>? selectedCategories,
+    int skip = 0,
+    int limit = 10,
+  }) async {
     final token = await getToken();
-
     var uri = Uri.parse('$baseUrl/feed');
 
+    // 1. Standart sayfalama parametrelerimizi Map içine koyuyoruz
+    Map<String, String> queryParams = {
+      'skip': skip.toString(),
+      'limit': limit.toString(),
+    };
+
+    // 2. Eğer kategori filtresi varsa, onu da Map'e ekliyoruz
     if (selectedCategories != null && selectedCategories.isNotEmpty) {
-      uri = uri.replace(queryParameters: {
-        'categories': selectedCategories.join(','),
-      });
+      queryParams['categories'] = selectedCategories.join(',');
     }
+
+    // 3. Parametreleri URL'e güvenlice yapıştırıyoruz
+    uri = uri.replace(queryParameters: queryParams);
 
     try {
       final response = await http.get(
@@ -135,7 +146,7 @@ class ApiService {
     return response.statusCode == 200;
   }
 
-  // 8. BULUTA GÖRSEL YÜKLEME (ImgBB) ✅ Key artık .env'den okunuyor
+  // 8. BULUTA GÖRSEL YÜKLEME (ImgBB)
   Future<String?> uploadImageToCloud(File imageFile) async {
     final String imgbbApiKey = dotenv.env['IMGBB_API_KEY'] ?? '';
     try {
@@ -143,8 +154,9 @@ class ApiService {
         'POST',
         Uri.parse('https://api.imgbb.com/1/upload?key=$imgbbApiKey'),
       );
-      request.files
-          .add(await http.MultipartFile.fromPath('image', imageFile.path));
+      request.files.add(
+        await http.MultipartFile.fromPath('image', imageFile.path),
+      );
       final response = await request.send();
       final responseData = await response.stream.bytesToString();
       final jsonResult = jsonDecode(responseData);

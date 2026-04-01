@@ -7,10 +7,9 @@ class OnboardingController extends GetxController {
   final ApiService _apiService = ApiService();
 
   var categories = [].obs;
-  // ✅ Tek seçim yerine çoklu seçim listesi
   var selectedCategories = <String>[].obs;
   var isLoading = true.obs;
-
+  
   @override
   void onInit() {
     super.onInit();

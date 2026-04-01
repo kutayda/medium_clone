@@ -8,7 +8,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   
-  // Tema kontrolcüsünü uygulama başlar başlamaz ayağa kaldırıyoruz
   Get.put(ThemeController());
   
   runApp(const MediumCloneApp());

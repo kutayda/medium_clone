@@ -11,7 +11,6 @@ class PostDetailScreen extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    // FeedController'ı yakalıyoruz ki beğeni ve yorumları buradan da tetikleyebilelim
     final FeedController controller = Get.find<FeedController>();
 
     return Scaffold(

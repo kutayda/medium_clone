@@ -9,7 +9,6 @@ class CreatePostScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Beyni (Controller) ayağa kaldırıyoruz
     final CreatePostController controller = Get.put(CreatePostController());
 
     return Scaffold(

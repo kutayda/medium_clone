@@ -11,6 +11,8 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
+__pycache__/
+postgres_data/
 
 # IntelliJ related
 *.iml
